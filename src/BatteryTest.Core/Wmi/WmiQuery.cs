@@ -42,6 +42,8 @@ internal static class WmiQuery
 
 internal sealed class WmiRow(IReadOnlyDictionary<string, object?> values)
 {
+    public IReadOnlyDictionary<string, object?> Values => values;
+
     public string? GetString(string name)
     {
         if (!values.TryGetValue(name, out var value) || value is null)

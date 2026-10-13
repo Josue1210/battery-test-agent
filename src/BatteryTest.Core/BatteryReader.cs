@@ -18,6 +18,38 @@ public static class BatteryReader
     private const int MaxVoltageMV = 30_000;
     private const int MaxCycleCount = 10_000;
 
+    private static readonly string[] WmiClasses = ["BatteryStatus", "BatteryFullChargedCapacity", "BatteryStaticData", "BatteryCycleCount"];
+    private static readonly HashSet<string> PrivateProperties = new(StringComparer.OrdinalIgnoreCase) { "SerialNumber", "UniqueID" };
+
+    /// <summary>
+    /// Valores tal como los reporta el firmware, sin filtrar, para diagnosticar laptops
+    /// que reportan datos raros. Excluye el número de serie.
+    /// </summary>
+    public static IReadOnlyList<RawWmiObject> ReadRaw()
+    {
+        var objects = new List<RawWmiObject>();
+        foreach (var className in WmiClasses)
+        {
+            foreach (var row in WmiQuery.Run(WmiQuery.Wmi, $"SELECT * FROM {className}"))
+            {
+                var properties = row.Values
+                    .Where(p => !PrivateProperties.Contains(p.Key))
+                    .OrderBy(p => p.Key, StringComparer.Ordinal)
+                    .Select(p => new KeyValuePair<string, string>(p.Key, FormatRaw(p.Value)))
+                    .ToList();
+                objects.Add(new RawWmiObject(className, properties));
+            }
+        }
+        return objects;
+    }
+
+    private static string FormatRaw(object? value) => value switch
+    {
+        null => "(vacío)",
+        Array array => "[" + string.Join(", ", array.Cast<object?>().Select(FormatRaw)) + "]",
+        _ => Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? "(vacío)",
+    };
+
     public static IReadOnlyList<BatteryReading> Read()
     {
         var status = ByInstance(WmiQuery.Run(WmiQuery.Wmi, "SELECT * FROM BatteryStatus"));

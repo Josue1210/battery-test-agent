@@ -22,4 +22,6 @@ public sealed record MemoryInfo(long TotalBytes, int Modules, int? SpeedMTs, str
 
 public sealed record CpuSample(double? UsagePercent, int? FrequencyMHz);
 
+public sealed record RawWmiObject(string ClassName, IReadOnlyList<KeyValuePair<string, string>> Properties);
+
 public sealed record PowerStatus(bool? AcOnline, int? BatteryPercent, TimeSpan? EstimatedRemaining, bool BatterySaverOn, bool HasBattery);

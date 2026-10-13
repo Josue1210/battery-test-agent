@@ -1,4 +1,6 @@
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using BatteryTest.Core;
 
@@ -42,6 +44,33 @@ public partial class MainWindow : Window
     }
 
     private async void OnRefreshClick(object sender, RoutedEventArgs e) => await RefreshBatteryAsync();
+
+    private async void OnCopyReportClick(object sender, RoutedEventArgs e)
+    {
+        await RefreshBatteryAsync();
+        var raw = await Task.Run(BatteryReader.ReadRaw);
+        var report = ReportText.Build(
+        [
+            ("Batería", Rows(BatteryList)),
+            ("Energía", Rows(PowerList)),
+            ("CPU en vivo", Rows(CpuList)),
+            ("Equipo", Rows(HardwareList)),
+        ], raw);
+
+        try
+        {
+            Clipboard.SetText(report);
+            StatusText.Text = $"Reporte copiado al portapapeles ({DateTime.Now:T})";
+        }
+        catch (COMException)
+        {
+            // Otro programa tiene el portapapeles abierto.
+            StatusText.Text = "No se pudo copiar: el portapapeles está ocupado. Intenta de nuevo.";
+        }
+    }
+
+    private static IEnumerable<InfoRow> Rows(ItemsControl list) =>
+        list.ItemsSource as IEnumerable<InfoRow> ?? [];
 
     private async Task RefreshBatteryAsync()
     {
