@@ -29,8 +29,9 @@ public sealed record BatteryReading
         Ratio(FullChargedCapacityMWh, DesignedCapacityMWh) is { } r && r is >= 0.1 and <= 1.2 ? r * 100 : null;
 
     /// <summary>
-    /// Algunos firmwares (p. ej. Dell Latitude 3380) devuelven la capacidad de diseño como
-    /// capacidad actual y 0 ciclos: en ese caso la salud no es confiable.
+    /// Capacidad actual igual a la de diseño y 0 ciclos. Es lo normal en una batería nueva,
+    /// pero también lo que devuelven los firmwares que no reportan el desgaste: con una sola
+    /// lectura no se pueden distinguir.
     /// </summary>
     public bool WearPossiblyUnreported =>
         FullChargedCapacityMWh is { } full && full == DesignedCapacityMWh && CycleCount is null or 0;
