@@ -24,11 +24,18 @@ public static class InfoRows
             rows.Add(new($"{prefix}Química", Text(b.Chemistry)));
             rows.Add(new($"{prefix}Capacidad de diseño", Energy(b.DesignedCapacityMWh)));
             rows.Add(new($"{prefix}Capacidad actual", Energy(b.FullChargedCapacityMWh)));
-            rows.Add(new($"{prefix}Salud", b.HealthPercent is { } h ? $"{h:0.0} %" : NotAvailable));
+            rows.Add(new($"{prefix}Salud", b.HealthPercent is not { } h ? NotAvailable
+                : b.WearPossiblyUnreported ? $"{h:0.0} % ⚠ dudoso: el firmware podría no reportar el desgaste (capacidad actual igual a la de diseño y 0 ciclos)"
+                : $"{h:0.0} %"));
             rows.Add(new($"{prefix}Carga restante", b.RemainingCapacityMWh is { } r
                 ? $"{Energy(r)}" + (b.ChargePercent is { } p ? $" ({p:0} %)" : "")
                 : NotAvailable));
-            rows.Add(new($"{prefix}Ciclos", b.CycleCount?.ToString() ?? NotAvailable));
+            rows.Add(new($"{prefix}Ciclos", b.CycleCount switch
+            {
+                null => NotAvailable,
+                0 => "0 (puede que el firmware no lo reporte)",
+                var n => n.Value.ToString(),
+            }));
             rows.Add(new($"{prefix}Voltaje", b.VoltageMV is { } v ? $"{v / 1000.0:0.00} V" : NotAvailable));
             rows.Add(new($"{prefix}Descarga", Watts(b.DischargeRateMW)));
             rows.Add(new($"{prefix}Carga", Watts(b.ChargeRateMW)));
@@ -61,7 +68,7 @@ public static class InfoRows
             new("Sistema operativo", Text(hw.OperatingSystem)),
             new("CPU", Text(hw.Cpu?.Name)),
             new("Núcleos / hilos", hw.Cpu is { } c ? $"{Text(c.Cores?.ToString())} / {Text(c.LogicalProcessors?.ToString())}" : NotAvailable),
-            new("Frecuencia base", hw.Cpu?.BaseClockMHz is { } mhz ? $"{mhz / 1000.0:0.00} GHz" : NotAvailable),
+            new("Frecuencia nominal", hw.Cpu?.BaseClockMHz is { } mhz ? $"{mhz / 1000.0:0.00} GHz" : NotAvailable),
         };
 
         if (hw.Gpus.Count == 0)

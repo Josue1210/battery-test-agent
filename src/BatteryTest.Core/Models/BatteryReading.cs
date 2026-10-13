@@ -28,6 +28,13 @@ public sealed record BatteryReading
     public double? HealthPercent =>
         Ratio(FullChargedCapacityMWh, DesignedCapacityMWh) is { } r && r is >= 0.1 and <= 1.2 ? r * 100 : null;
 
+    /// <summary>
+    /// Algunos firmwares (p. ej. Dell Latitude 3380) devuelven la capacidad de diseño como
+    /// capacidad actual y 0 ciclos: en ese caso la salud no es confiable.
+    /// </summary>
+    public bool WearPossiblyUnreported =>
+        FullChargedCapacityMWh is { } full && full == DesignedCapacityMWh && CycleCount is null or 0;
+
     /// <summary>Carga restante respecto a la capacidad actual, en %.</summary>
     public double? ChargePercent =>
         Ratio(RemainingCapacityMWh, FullChargedCapacityMWh) is { } r ? Math.Clamp(r, 0, 1) * 100 : null;
