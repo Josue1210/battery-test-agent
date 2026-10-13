@@ -1,0 +1,76 @@
+<Window x:Class="BatteryTest.Agent.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:BatteryTest.Agent"
+        Title="Battery Test — Agente (prototipo)"
+        Height="720" Width="760" MinWidth="560" MinHeight="420"
+        WindowStartupLocation="CenterScreen"
+        Background="#F4F5F7" FontFamily="Segoe UI" FontSize="13">
+    <Window.Resources>
+        <DataTemplate x:Key="RowTemplate" DataType="{x:Type local:InfoRow}">
+            <Grid Margin="0,3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="210" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Label}" Foreground="#5F6368" />
+                <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="#202124" />
+            </Grid>
+        </DataTemplate>
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#E0E2E6" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+        <Style x:Key="CardTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel Margin="20,16">
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <TextBlock Text="Battery Test" FontSize="22" FontWeight="SemiBold" />
+            <TextBlock Foreground="#5F6368" TextWrapping="Wrap" Margin="0,4,0,0"
+                       Text="Prototipo de solo lectura: muestra lo que el agente puede leer de tu batería y tu hardware. Todavía no genera carga ni envía ningún dato." />
+        </StackPanel>
+
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,4,0,0">
+            <Button DockPanel.Dock="Right" Content="Actualizar" Padding="16,6" Click="OnRefreshClick" />
+            <TextBlock x:Name="StatusText" VerticalAlignment="Center" Foreground="#5F6368" />
+        </DockPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Batería" Style="{StaticResource CardTitle}" />
+                        <ItemsControl x:Name="BatteryList" ItemTemplate="{StaticResource RowTemplate}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Energía" Style="{StaticResource CardTitle}" />
+                        <ItemsControl x:Name="PowerList" ItemTemplate="{StaticResource RowTemplate}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="CPU en vivo" Style="{StaticResource CardTitle}" />
+                        <ItemsControl x:Name="CpuList" ItemTemplate="{StaticResource RowTemplate}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Equipo" Style="{StaticResource CardTitle}" />
+                        <ItemsControl x:Name="HardwareList" ItemTemplate="{StaticResource RowTemplate}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>
