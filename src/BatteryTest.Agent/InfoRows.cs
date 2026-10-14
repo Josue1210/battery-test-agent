@@ -1,4 +1,6 @@
+using BatteryTest.Core.Conditions;
 using BatteryTest.Core.Models;
+using BatteryTest.Core.Testing;
 
 namespace BatteryTest.Agent;
 
@@ -39,13 +41,62 @@ public static class InfoRows
         return rows;
     }
 
-    public static List<InfoRow> Power(PowerStatus s) =>
+    public static List<InfoRow> Power(PowerStatus s, PowerPlan? plan) =>
     [
         new("Cargador", s.AcOnline switch { true => "Conectado", false => "Desconectado", null => "Desconocido" }),
         new("Batería (Windows)", s.BatteryPercent is { } p ? $"{p} %" : NotAvailable),
-        new("Tiempo estimado", s.EstimatedRemaining is { } t ? $"{(int)t.TotalHours} h {t.Minutes:00} min" : NotAvailable),
+        new("Tiempo estimado (Windows)", s.EstimatedRemaining is { } t ? Span(t) : NotAvailable),
         new("Ahorro de batería", s.BatterySaverOn ? "Activado ⚠ (afecta el resultado del test)" : "Desactivado"),
+        new("Plan de energía", plan is null ? NotAvailable : Text(plan.Name) + (plan.IsPowerSaver ? " ⚠ (afecta el resultado del test)" : "")),
     ];
+
+    public static List<InfoRow> TestStatus(TestStatus s, string profileName) =>
+    [
+        new("Perfil", profileName),
+        new("Tiempo transcurrido", Span(s.Elapsed)),
+        new("Fase actual", $"{s.Phase} ({s.TargetCpuPercent:0} % de CPU)"),
+        new("Batería", s.BatteryPercent is { } p ? $"{p} %" : NotAvailable),
+        new("Consumo promedio", s.AveragePowerMW is { } w ? $"{w / 1000:0.0} W" : "Calculando… (necesita al menos dos lecturas)"),
+        new("Tiempo restante estimado", s.EstimatedRemaining is { } r ? Span(r) : "Calculando…"),
+        new("Lecturas guardadas", s.SampleCount.ToString()),
+    ];
+
+    public static List<InfoRow> Result(TestFile? file, TestSummary? summary, TestEndReason reason, string? detail)
+    {
+        var rows = new List<InfoRow> { new("Cómo terminó", EndReason(reason)) };
+        if (detail is not null && reason == TestEndReason.Error)
+            rows.Add(new("Detalle del error", detail));
+        if (file?.Header is { } header)
+            rows.Add(new("Perfil", header.Profile.Name));
+        if (summary is not null)
+        {
+            rows.Add(new("Duración del test", Span(summary.Duration)));
+            rows.Add(new("Energía consumida", summary.EnergyUsedMWh is { } used
+                ? Energy(used) + (summary.PercentUsed is { } pct ? $" · {pct:0.0} % de la batería" : "")
+                : NotAvailable));
+            rows.Add(new("Consumo promedio", summary.AveragePowerMW is { } w ? $"{w / 1000:0.0} W" : NotAvailable));
+            rows.Add(new("Duración estimada con batería completa", summary.EstimatedFullRuntime is { } full
+                ? Span(full) + (summary.IsShort ? " (test corto: estimación poco precisa)" : "")
+                : NotAvailable));
+            rows.Add(new("Lecturas guardadas", summary.SampleCount.ToString()));
+        }
+        if (file is not null)
+            rows.Add(new("Archivo", file.Path));
+        return rows;
+    }
+
+    private static string EndReason(TestEndReason reason) => reason switch
+    {
+        TestEndReason.UserStopped => "Lo detuviste tú",
+        TestEndReason.ChargerConnected => "Se conectó el cargador",
+        TestEndReason.MinBatteryReached => "La batería llegó al mínimo configurado",
+        TestEndReason.Shutdown => "El equipo se apagó durante el test (batería agotada)",
+        TestEndReason.Error => "Error",
+        _ => reason.ToString(),
+    };
+
+    private static string Span(TimeSpan t) =>
+        t.TotalHours >= 1 ? $"{(int)t.TotalHours} h {t.Minutes:00} min" : $"{t.Minutes} min {t.Seconds:00} s";
 
     public static List<InfoRow> Cpu(CpuSample sample) =>
     [

@@ -20,7 +20,7 @@ public sealed record GpuInfo(string Name, string? DriverVersion);
 
 public sealed record MemoryInfo(long TotalBytes, int Modules, int? SpeedMTs, string? Type);
 
-public sealed record CpuSample(double? UsagePercent, int? FrequencyMHz);
+public sealed record CpuSample(double? UsagePercent, double? BusyPercent, int? FrequencyMHz);
 
 public sealed record RawWmiObject(string ClassName, IReadOnlyList<KeyValuePair<string, string>> Properties);
 
